@@ -51,7 +51,5 @@ defmodule Mix.Tasks.AOC.Day2Part2 do
     IO.puts("Noun: #{noun} Verb: #{verb}")
 
     IO.puts("Answer: #{100 * noun + verb}")
-    # result = runProgramWithInput(program, 12, 2)
-    # IO.puts("Answer: #{List.first(result)}")
   end
 end

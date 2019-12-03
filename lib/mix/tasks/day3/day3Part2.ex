@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.AOC.Day3 do
+defmodule Mix.Tasks.AOC.Day3Part2 do
   use Mix.Task
 
   def parseInstructions(instructions) do
@@ -38,34 +38,45 @@ defmodule Mix.Tasks.AOC.Day3 do
     end)
   end
 
-  def manhattenDistance({x, y}) do
-    abs(x) + abs(y)
+  def stepsUntil(coordinates, coordinateToMatch) do
+    coordinates
+    |> Enum.with_index()
+    |> Enum.find(fn {coordinate, _} -> coordinateToMatch == coordinate end)
+    |> elem(1)
   end
 
-  def distanceFromOriginToClosestIntersection(instructions) do
+  def stepsUntilIntersections(coordinates1, coordinates2) do
+    crossCoordinates = MapSet.intersection(MapSet.new(coordinates1), MapSet.new(coordinates2))
+
+    crossCoordinates
+    |> Enum.map(fn coordinate ->
+      stepsUntil(coordinates1, coordinate) + stepsUntil(coordinates2, coordinate) + 2
+    end)
+  end
+
+  def distanceFromOriginToLowestStepIntersection(instructions) do
     [coordinates1, coordinates2] =
       instructions
       |> parseInstructions()
       |> Enum.map(fn x -> instructionsToCoordinates(x) end)
 
-    crossCoordinates = MapSet.intersection(MapSet.new(coordinates1), MapSet.new(coordinates2))
-
-    crossCoordinates
-    |> Enum.map(fn coordinate -> manhattenDistance(coordinate) end)
+    stepsUntilIntersections(coordinates1, coordinates2)
     |> Enum.sort()
     |> List.first()
   end
 
   def run(_) do
-    IO.inspect(distanceFromOriginToClosestIntersection("R75,D30,R83,U83,L12,D49,R71,U7,L72\nU62,R66,U55,R34,D71,R55,D58,R83"))
+    IO.inspect(distanceFromOriginToLowestStepIntersection("R75,D30,R83,U83,L12,D49,R71,U7,L72\nU62,R66,U55,R34,D71,R55,D58,R83"))
 
-    IO.inspect(distanceFromOriginToClosestIntersection("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51\nU98,R91,D20,R16,D67,R40,U7,R15,U6,R7"))
+    IO.inspect(
+      distanceFromOriginToLowestStepIntersection("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51\nU98,R91,D20,R16,D67,R40,U7,R15,U6,R7")
+    )
 
     input =
       "./lib/mix/tasks/day3/input3.txt"
       |> File.read!()
       |> String.trim()
 
-    IO.puts("Answer: #{distanceFromOriginToClosestIntersection(input)}")
+    IO.puts("Answer: #{distanceFromOriginToLowestStepIntersection(input)}")
   end
 end

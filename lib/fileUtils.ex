@@ -1,5 +1,4 @@
 defmodule FileUtils do
-
   def splitFileToIntegers(file, separator) do
     file
     |> File.read!()

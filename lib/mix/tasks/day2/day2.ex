@@ -15,16 +15,24 @@ defmodule Mix.Tasks.AOC.Day2 do
       |> Enum.to_list()
       |> Enum.map(fn x -> x * 4 end)
 
-    output = Enum.reduce(instructionStartingIndexes, {:running, program}, fn programIndex, {status, resultingProgram} ->
-      if status === :halted || Enum.at(resultingProgram, programIndex) == 99 do
-        {:halted, resultingProgram}
-      else
-        [op, arg1Index, arg2Index, resultIndex] = Enum.slice(resultingProgram, programIndex, 4)
-        calculatedValue = executeOp(op, Enum.at(resultingProgram, arg1Index), Enum.at(resultingProgram, arg2Index))
-        {:running, List.replace_at(resultingProgram, resultIndex, calculatedValue)}
-      end
+    output =
+      Enum.reduce(instructionStartingIndexes, {:running, program}, fn programIndex, {status, resultingProgram} ->
+        if status === :halted || Enum.at(resultingProgram, programIndex) == 99 do
+          {:halted, resultingProgram}
+        else
+          [op, arg1Index, arg2Index, resultIndex] = Enum.slice(resultingProgram, programIndex, 4)
 
-    end)
+          calculatedValue =
+            executeOp(
+              op,
+              Enum.at(resultingProgram, arg1Index),
+              Enum.at(resultingProgram, arg2Index)
+            )
+
+          {:running, List.replace_at(resultingProgram, resultIndex, calculatedValue)}
+        end
+      end)
+
     elem(output, 1)
   end
 

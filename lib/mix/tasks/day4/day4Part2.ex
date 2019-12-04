@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.AOC.Day4 do
+defmodule Mix.Tasks.AOC.Day4Part2 do
   use Mix.Task
 
   def number_to_list(0) do
@@ -25,15 +25,24 @@ defmodule Mix.Tasks.AOC.Day4 do
     |> Enum.all?(fn [x, y] -> x <= y end)
   end
 
-  def has_two_adajacent_digits(password) do
+  def adjacent_numbers([]) do
+    []
+  end
+
+  def adjacent_numbers(number_list) do
+    {adjacent_numbers, rest} = Enum.split_while(number_list, fn n -> n == List.first(number_list) end)
+    [adjacent_numbers] ++ adjacent_numbers(rest)
+  end
+
+  def has_two_adajacent_digits_not_in_larger_group(password) do
     password
     |> number_to_list()
-    |> adjacent_pairs()
-    |> Enum.any?(fn [x, y] -> x === y end)
+    |> adjacent_numbers()
+    |> Enum.any?(fn adjacent_nums -> length(adjacent_nums) == 2 end)
   end
 
   def is_valid_password(password) do
-    has_two_adajacent_digits(password) && is_never_decreasing(password)
+    has_two_adajacent_digits_not_in_larger_group(password) && is_never_decreasing(password)
   end
 
   def run(_) do

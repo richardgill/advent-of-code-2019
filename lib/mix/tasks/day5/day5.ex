@@ -22,7 +22,7 @@ defmodule Mix.Tasks.AOC.Day5 do
     {:halted, 0, instructions}
   end
 
-  def runInstruction({operation, mode_1, mode_2, mode_3}, index, instructions, _) when operation in [1,2] do
+  def runInstruction({operation, mode_1, mode_2, mode_3}, index, instructions, _) when operation in [1, 2] do
     [parameter_1, parameter_2, parameter_3] = Enum.slice(instructions, index + 1, 3)
     parameter_1_value = if mode_1 == 0, do: Enum.at(instructions, parameter_1), else: parameter_1
     parameter_2_value = if mode_2 == 0, do: Enum.at(instructions, parameter_2), else: parameter_2
@@ -57,16 +57,16 @@ defmodule Mix.Tasks.AOC.Day5 do
     instructions
     |> calculate_operation(index)
     |> runInstruction(index, instructions, input)
-
   end
 
   def run_program(input, program) do
-    instructions = program
-    |> String.trim()
-    |> String.split(",")
-    |> Enum.map(fn x -> elem(Integer.parse(x), 0) end)
+    instructions =
+      program
+      |> String.trim()
+      |> String.split(",")
+      |> Enum.map(fn x -> elem(Integer.parse(x), 0) end)
 
-    0..length(instructions)-1
+    0..(length(instructions) - 1)
     |> Enum.reduce({:running, 0, instructions}, fn index, state ->
       step_through_program(index, state, input)
     end)
@@ -87,6 +87,7 @@ defmodule Mix.Tasks.AOC.Day5 do
       "./lib/mix/tasks/day5/input5.txt"
       |> File.read!()
       |> String.trim()
+
     IO.puts("Answer:")
     run_program(1, input)
   end

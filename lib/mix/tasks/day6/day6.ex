@@ -20,9 +20,10 @@ defmodule Mix.Tasks.AOC.Day6 do
   end
 
   def count_orbits(orbits) do
-    unique_objects = List.flatten(orbits)
-    |> MapSet.new()
-    |> MapSet.to_list()
+    unique_objects =
+      List.flatten(orbits)
+      |> MapSet.new()
+      |> MapSet.to_list()
 
     unique_objects
     |> Enum.map(fn object -> calculate_orbits(object, orbits, orbits) end)
@@ -35,6 +36,7 @@ defmodule Mix.Tasks.AOC.Day6 do
       "./lib/mix/tasks/day6/input6.txt"
       |> File.read!()
       |> String.trim()
+
     answer = count_orbits(parse_orbits(input))
     IO.puts("Answer: #{answer}")
   end

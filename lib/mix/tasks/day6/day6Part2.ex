@@ -7,46 +7,40 @@ defmodule Mix.Tasks.AOC.Day6Part2 do
     |> Enum.map(fn orbit -> String.split(orbit, ")") end)
   end
 
-  def calculate_orbits(object, [], _) do
-    0
+  def calculate_transfer_lengths(_, _, [], _, _ ) do
+    []
   end
 
-  def calculate_orbits(object, [[o, object] | tail], orbits) do
-    # IO.puts(object)
-    # IO.inspect([[o, object] | tail])
-    1 + calculate_orbits(o, orbits, orbits)
+  def calculate_transfer_lengths(from, to, [orbit | _], _, length_so_far) when orbit in [[from, to], [to, from]] do
+    [length_so_far - 1]
   end
 
-  def calculate_orbits(object, [_ | tail], orbits) do
-    # IO.puts("No match")
-    # IO.puts(object)
-    # IO.inspect(tail)
-    calculate_orbits(object, tail, orbits)
+  def calculate_transfer_lengths(from, to, [[currently_orbiting, from] | tail], all_orbits, length_so_far ) do
+    calculate_transfer_lengths(currently_orbiting, to, List.delete(all_orbits, [currently_orbiting, from]), all_orbits, length_so_far + 1)
+      ++ calculate_transfer_lengths(from, to, tail, all_orbits, length_so_far)
   end
 
+  def calculate_transfer_lengths(from, to, [[from, currently_orbiting] | tail], all_orbits, length_so_far ) do
+    calculate_transfer_lengths(currently_orbiting, to, List.delete(all_orbits, [from, currently_orbiting]), all_orbits, length_so_far + 1)
+      ++ calculate_transfer_lengths(from, to, tail, all_orbits, length_so_far)
+  end
 
-  def count_orbits(orbits) do
-    unique_objects = List.flatten(orbits)
-    |> MapSet.new()
-    |> MapSet.to_list()
+  def calculate_transfer_lengths(from, to, [_ | tail], all_orbits, length_so_far ) do
+    calculate_transfer_lengths(from, to, tail, all_orbits, length_so_far)
+  end
 
-    counts = unique_objects
-    |> Enum.map(fn object -> %{:name => object, :orbits => calculate_orbits(object, orbits, orbits)} end)
-
-    IO.inspect(counts)
-
-    counts
-    |> Enum.map(fn count -> count.orbits end)
-    |> Enum.sum()
+  def shortest_transfer(from, to, orbits) do
+    calculate_transfer_lengths(from, to, orbits, orbits, 0)
+    |> Enum.min()
   end
 
   def run(_) do
-    IO.inspect(count_orbits(parse_orbits("COM)B\nB)C\nC)D\nD)E\nE)F\nB)G\nG)H\nD)I\nE)J\nJ)K\nK)L")))
+    IO.inspect(shortest_transfer("YOU", "SAN", parse_orbits("COM)B\nB)C\nC)D\nD)E\nE)F\nB)G\nG)H\nD)I\nE)J\nJ)K\nK)L\nK)YOU\nI)SAN")))
     input =
       "./lib/mix/tasks/day6/input6.txt"
       |> File.read!()
       |> String.trim()
-    answer = count_orbits(parse_orbits(input))
+    answer = shortest_transfer("YOU", "SAN",parse_orbits(input))
     IO.puts("Answer: #{answer}")
   end
 end

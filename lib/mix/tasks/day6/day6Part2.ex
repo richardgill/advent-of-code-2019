@@ -7,16 +7,14 @@ defmodule Mix.Tasks.AOC.Day6Part2 do
     |> Enum.map(fn orbit -> String.split(orbit, ")") end)
   end
 
+  def calculate_transfer_lengths(_, _, [], _, _), do: 0
 
-  def calculate_transfer_lengths(_, _, [], _, _), do: []
-
-  def calculate_transfer_lengths(from, to, [orbit | _], _, length_so_far) when orbit in [[from, to], [to, from]], do: [length_so_far - 1]
+  def calculate_transfer_lengths(from, to, [orbit | _], _, length_so_far) when orbit in [[from, to], [to, from]], do: length_so_far - 1
 
   def calculate_transfer_lengths(from, to, [orbit | tail], all_orbits, length_so_far) do
     if from in orbit do
       currently_orbiting = List.delete(orbit, from) |> List.first()
-        calculate_transfer_lengths(currently_orbiting, to, List.delete(all_orbits, orbit), all_orbits, length_so_far + 1) ++
-          calculate_transfer_lengths(from, to, tail, all_orbits, length_so_far)
+        calculate_transfer_lengths(currently_orbiting, to, List.delete(all_orbits, orbit), all_orbits, length_so_far + 1) + calculate_transfer_lengths(from, to, tail, all_orbits, length_so_far)
       else
         calculate_transfer_lengths(from, to, tail, all_orbits, length_so_far)
     end
@@ -24,7 +22,6 @@ defmodule Mix.Tasks.AOC.Day6Part2 do
 
   def shortest_transfer(from, to, orbits) do
     calculate_transfer_lengths(from, to, orbits, orbits, 0)
-    |> Enum.min()
   end
 
   def run(_) do

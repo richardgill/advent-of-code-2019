@@ -1,9 +1,8 @@
 defmodule Mix.Tasks.AOC.Day7 do
   use Mix.Task
 
-
   def permutations([]), do: [[]]
-  def permutations(list), do: for elem <- list, rest <- permutations(list--[elem]), do: [elem|rest]
+  def permutations(list), do: for(elem <- list, rest <- permutations(list -- [elem]), do: [elem | rest])
 
   def calculate_operation(instructions, index) do
     start_instruction = Enum.at(instructions, index)
@@ -100,7 +99,7 @@ defmodule Mix.Tasks.AOC.Day7 do
     run_amplifiers_with_phases(instructions, rest, run_program([phase, last_output], instructions))
   end
 
-  def find_largest_amplifier_output(instructions, phases \\ [0,1,2,3,4]) do
+  def find_largest_amplifier_output(instructions, phases \\ [0, 1, 2, 3, 4]) do
     permutations(phases)
     |> Enum.map(fn ps -> run_amplifiers_with_phases(instructions, ps) end)
     |> Enum.max()
@@ -122,7 +121,11 @@ defmodule Mix.Tasks.AOC.Day7 do
     IO.inspect(run_program([1], "4,0,99"))
     IO.inspect(find_largest_amplifier_output("3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"))
     IO.inspect(find_largest_amplifier_output("3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0"))
-    IO.inspect(find_largest_amplifier_output("3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0"))
+
+    IO.inspect(
+      find_largest_amplifier_output("3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0")
+    )
+
     input =
       "./lib/mix/tasks/day7/input7.txt"
       |> File.read!()

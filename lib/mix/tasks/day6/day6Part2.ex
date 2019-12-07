@@ -14,9 +14,11 @@ defmodule Mix.Tasks.AOC.Day6Part2 do
   def calculate_transfer_lengths(from, to, [orbit | tail], all_orbits, length_so_far) do
     if from in orbit do
       currently_orbiting = List.delete(orbit, from) |> List.first()
-        calculate_transfer_lengths(currently_orbiting, to, List.delete(all_orbits, orbit), all_orbits, length_so_far + 1) + calculate_transfer_lengths(from, to, tail, all_orbits, length_so_far)
-      else
+
+      calculate_transfer_lengths(currently_orbiting, to, List.delete(all_orbits, orbit), all_orbits, length_so_far + 1) +
         calculate_transfer_lengths(from, to, tail, all_orbits, length_so_far)
+    else
+      calculate_transfer_lengths(from, to, tail, all_orbits, length_so_far)
     end
   end
 

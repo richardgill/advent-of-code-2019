@@ -77,20 +77,19 @@ defmodule Mix.Tasks.AOC.Day7Part2 do
     execute_program(new_state, inputs)
   end
 
-  def execute_program({:outputting, index, instructions, output, inputIndex}, inputs) do
+  def execute_program({:outputting, index, instructions, output, inputIndex}, _) do
     {:running, index, instructions, output, inputIndex}
   end
 
-  def execute_program({:halted, index, instructions, output, inputIndex}, inputs) do
+  def execute_program({:halted, index, instructions, output, inputIndex}, _) do
     {:halted, index, instructions, output, inputIndex}
   end
 
-
   def parse_instructions(instructions) do
     instructions
-      |> String.trim()
-      |> String.split(",")
-      |> Enum.map(fn x -> elem(Integer.parse(x), 0) end)
+    |> String.trim()
+    |> String.split(",")
+    |> Enum.map(fn x -> elem(Integer.parse(x), 0) end)
   end
 
   def run_program(inputs, instructions_string) do
@@ -98,56 +97,37 @@ defmodule Mix.Tasks.AOC.Day7Part2 do
     execute_program({:running, 0, instructions, nil, 0}, inputs)
   end
 
-
-  def reset_program_state(program_state) do
-    {status, index, instructions, output, inputIndex} = program_state
-    {status, index, instructions, nil, inputIndex}
-  end
-
-
   def has_halted(program_state), do: elem(program_state, 0) == :halted
 
   def get_output(program_state), do: elem(program_state, 3)
 
   def run_amplifiers_with_phases(instructions, phases, amplifier_program_states, amplifier_index, overall_counter) do
-    # IO.inspect(amplifier_index)
-    # IO.inspect(amplifier_program_states)
     {amplifier_program_state, inputs} = Enum.at(amplifier_program_states, amplifier_index)
-    phase = Enum.at(phases, amplifier_index)
-
-    # IO.inspect(previous_index)
-    # IO.inspect binding()
     previous_index = if amplifier_index == 0, do: length(phases) - 1, else: amplifier_index - 1
-    last_output = elem(Enum.at(amplifier_program_states, previous_index), 0) |> get_output() || 0
-
-    # cond do
-    #   overall_counter < length(phases) ->
-    #     phase
-    #   overall_counter == length(phases) ->
-    #     0
-    #   overall_counter > length(phases) ->
-    #     previous_index = if amplifier_index == 0, do: length(phases) - 1, else: amplifier_index - 1
-    #     Enum.at(amplifier_program_states, previous_index) |> get_output()
-    # end
-    # IO.inspect(program_state)
-    # IO.inspect([phase, last_output])
+    last_output = Enum.at(amplifier_program_states, previous_index) |> elem(0) |> get_output() || 0
     new_inputs = inputs ++ [last_output]
-    # IO.inspect binding()
-    IO.inspect binding()
     new_state = execute_program(amplifier_program_state, new_inputs)
-    # IO.inspect(new_state)
-    # :timer.sleep(2000)
+
     if has_halted(new_state) && amplifier_index == length(phases) - 1 do
       get_output(new_state)
     else
-      run_amplifiers_with_phases(instructions, phases, List.replace_at(amplifier_program_states, amplifier_index, {new_state, new_inputs}), rem(amplifier_index + 1, length(phases)), overall_counter + 1)
+      run_amplifiers_with_phases(
+        instructions,
+        phases,
+        List.replace_at(amplifier_program_states, amplifier_index, {new_state, new_inputs}),
+        rem(amplifier_index + 1, length(phases)),
+        overall_counter + 1
+      )
     end
   end
 
-  def find_largest_amplifier_output(instructions_string, phases \\ [5,6,7,8,9]) do
+  def find_largest_amplifier_output(instructions_string, phases \\ [5, 6, 7, 8, 9]) do
     instructions = parse_instructions(instructions_string)
+
     permutations(phases)
-    |> Enum.map(fn ps -> run_amplifiers_with_phases(instructions, ps, Enum.map(ps, fn phase -> {{:running, 0, instructions, nil, 0}, [phase]} end), 0, 0) end)
+    |> Enum.map(fn ps ->
+      run_amplifiers_with_phases(instructions, ps, Enum.map(ps, fn phase -> {{:running, 0, instructions, nil, 0}, [phase]} end), 0, 0)
+    end)
     |> Enum.max()
   end
 

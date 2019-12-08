@@ -9,9 +9,9 @@ defmodule Mix.Tasks.AOC.Day8 do
     |> Enum.map(fn x -> elem(Integer.parse(x), 0) end)
   end
 
-
   def image_layers(image_string, width, height) do
     image_input = parse_image(image_string)
+
     image_input
     |> Enum.chunk(width)
     |> Enum.chunk(height)
@@ -38,10 +38,12 @@ defmodule Mix.Tasks.AOC.Day8 do
   def run(_) do
     IO.inspect(calculate_checksum("123456789012", 3, 2))
     IO.inspect(calculate_checksum("122216789012", 3, 2))
+
     input =
       "./lib/mix/tasks/day8/input8.txt"
       |> File.read!()
       |> String.trim()
+
     answer = calculate_checksum(input, 25, 6)
     IO.puts("Answer: #{answer}")
   end

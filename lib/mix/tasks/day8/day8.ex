@@ -13,8 +13,8 @@ defmodule Mix.Tasks.AOC.Day8 do
     image_input = parse_image(image_string)
 
     image_input
-    |> Enum.chunk(width)
-    |> Enum.chunk(height)
+    |> Enum.chunk_every(width)
+    |> Enum.chunk_every(height)
   end
 
   def count_occurences_in_layer(layer, digit) do

@@ -190,6 +190,6 @@ defmodule Mix.Tasks.AOC.Day9 do
       |> File.read!()
       |> String.trim()
 
-    IO.inspect(run_program([1], instructions_string))
+    IO.inspect(run_program([2], instructions_string))
   end
 end

@@ -9,7 +9,9 @@ defmodule Mix.Tasks.AOC.Day9 do
     operation = rem(start_instruction, 100)
     mode_1 = rem(Integer.floor_div(start_instruction, 100), 10)
     mode_2 = rem(Integer.floor_div(start_instruction, 1000), 10)
-    mode_3 = rem(Integer.floor_div(start_instruction, 10000), 10)
+    mode_3_raw = rem(Integer.floor_div(start_instruction, 10000), 10)
+
+    mode_3 = if mode_3_raw == 0, do: 1, else: mode_3_raw
     {operation, mode_1, mode_2, mode_3}
   end
 
@@ -61,25 +63,26 @@ defmodule Mix.Tasks.AOC.Day9 do
     end
   end
 
-  def parameters_for_modes(instructions, index, mode_1, mode_2, relative_base_offset) do
+  def parameters_for_modes(instructions, index, mode_1, mode_2, mode_3, relative_base_offset) do
     [parameter_1, parameter_2, parameter_3] = Enum.slice(instructions, index + 1, 3)
     parameter_1_value = parameter_value_for_mode(instructions, mode_1, parameter_1, relative_base_offset)
     parameter_2_value = parameter_value_for_mode(instructions, mode_2, parameter_2, relative_base_offset)
-    {parameter_1_value, parameter_2_value, parameter_3}
+    parameter_3_value = parameter_index_for_mode(instructions, mode_3, parameter_3, relative_base_offset)
+    {parameter_1_value, parameter_2_value, parameter_3_value}
   end
 
   def runInstruction({99, _, _, _}, _, instructions, _, output, inputIndex, relative_base_offset) do
     {:halted, 0, instructions, output, inputIndex, relative_base_offset}
   end
 
-  def runInstruction({operation, mode_1, mode_2, _}, index, instructions, _, output, inputIndex, relative_base_offset) when operation in [5, 6] do
-    {parameter_1_value, parameter_2_value, _} = parameters_for_modes(instructions, index, mode_1, mode_2, relative_base_offset)
+  def runInstruction({operation, mode_1, mode_2, mode_3}, index, instructions, _, output, inputIndex, relative_base_offset) when operation in [5, 6] do
+    {parameter_1_value, parameter_2_value, _} = parameters_for_modes(instructions, index, mode_1, mode_2, mode_3, relative_base_offset)
     new_index = execute_jump_operation(operation, parameter_1_value, parameter_2_value, index)
     {:running, new_index, instructions, output, inputIndex, relative_base_offset}
   end
 
-  def runInstruction({operation, mode_1, mode_2, _}, index, instructions, _, output, inputIndex, relative_base_offset) when operation in [1, 2, 7, 8] do
-    {parameter_1_value, parameter_2_value, parameter_3_value} = parameters_for_modes(instructions, index, mode_1, mode_2, relative_base_offset)
+  def runInstruction({operation, mode_1, mode_2, mode_3}, index, instructions, _, output, inputIndex, relative_base_offset) when operation in [1, 2, 7, 8] do
+    {parameter_1_value, parameter_2_value, parameter_3_value} = parameters_for_modes(instructions, index, mode_1, mode_2, mode_3, relative_base_offset)
     {skip_forward, result} = execute_operation(operation, parameter_1_value, parameter_2_value)
     new_instructions = replace_in_memory(instructions, parameter_3_value, result)
     {:running, index + skip_forward, new_instructions, output, inputIndex, relative_base_offset}
@@ -101,8 +104,8 @@ defmodule Mix.Tasks.AOC.Day9 do
     {:outputting, index + 2, instructions, output, inputIndex, relative_base_offset}
   end
 
-  def runInstruction({9, mode_1, mode2, _}, index, instructions, inputs, output, inputIndex, relative_base_offset) do
-    {parameter, _, _} = parameters_for_modes(instructions, index, mode_1, mode2, relative_base_offset)
+  def runInstruction({9, mode_1, mode_2, mode_3}, index, instructions, inputs, output, inputIndex, relative_base_offset) do
+    {parameter, _, _} = parameters_for_modes(instructions, index, mode_1, mode_2, mode_3, relative_base_offset)
     {:running, index + 2, instructions, output, inputIndex, relative_base_offset + parameter}
   end
 
@@ -172,9 +175,10 @@ defmodule Mix.Tasks.AOC.Day9 do
     # IO.inspect(run_program([1], "3,0,99"))
     # IO.inspect(run_program([1], "103,0,99"))
     # IO.inspect(run_program([88], "109,2,203,-1,99"))
-    IO.inspect(run_program([], "109,2,204,-1,99"))
-    IO.inspect(run_program([], "109,2,104,-1,99"))
-    IO.inspect(run_program([], "109,2,4,0,99"))
+    # IO.inspect(run_program([], "109,2,204,-1,99"))
+    # IO.inspect(run_program([], "109,2,104,-1,99"))
+    # IO.inspect(run_program([], "109,2,4,0,99"))
+    IO.inspect(run_program([], "109,2,21102,0,1,0,99"))
     # IO.inspect(replace_in_memory([0,1,2,3], 3, 999))
     # IO.inspect(replace_in_memory([0,1,2,3], 4, 999))
     # IO.inspect(replace_in_memory([0,1,2,3], 5, 999))

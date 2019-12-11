@@ -1,13 +1,6 @@
 defmodule Mix.Tasks.AOC.Day10 do
   use Mix.Task
 
-  # def gcd(a, 0), do: a
-  # def gcd(0, b), do: b
-  # def gcd(a, b), do: gcd(b, rem(a,b))
-
-  # def lcm(0, 0), do: 0
-  # def lcm(a, b), do: (a*b)/gcd(a,b)
-
   def read_input_from_file(file) do
     file
     |> File.read!()
@@ -95,7 +88,6 @@ defmodule Mix.Tasks.AOC.Day10 do
     |> coordinates_of_asteroids()
     |> calculate_direct_line_of_sights()
   end
-
 
   def run(_) do
     IO.inspect(coordinates_with_most_detections("./lib/mix/tasks/day10/example1.txt"))

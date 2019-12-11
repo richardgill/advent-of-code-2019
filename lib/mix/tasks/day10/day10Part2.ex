@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.AOC.Day10 do
+defmodule Mix.Tasks.AOC.Day10Part2 do
   use Mix.Task
 
   def read_input_from_file(file) do
@@ -72,18 +72,18 @@ defmodule Mix.Tasks.AOC.Day10 do
          end))
   end
 
-  def count_direct_lines_of_sight(start_coordinate, coordinates) do
+  def calculate_direct_lines_of_sight(start_coordinate, coordinates) do
     coordinates
     |> Enum.filter(fn target_coordinate ->
       has_direct_line_of_sight(start_coordinate, target_coordinate, List.delete(coordinates, target_coordinate))
     end)
-    |> length()
   end
 
   def calculate_direct_line_of_sights(coordinates) do
     coordinates
-    |> Enum.map(fn coordinate -> {coordinate, count_direct_lines_of_sight(coordinate, List.delete(coordinates, coordinate))} end)
-    |> Enum.max_by(fn x -> elem(x, 1) end)
+    |> Enum.map(fn coordinate ->
+      {coordinate, calculate_direct_lines_of_sight(coordinate, List.delete(coordinates, coordinate)) |> length()}
+    end)
   end
 
   def coordinates_with_most_detections(file) do
@@ -91,14 +91,58 @@ defmodule Mix.Tasks.AOC.Day10 do
     |> read_input_from_file()
     |> coordinates_of_asteroids()
     |> calculate_direct_line_of_sights()
+    |> Enum.max_by(fn x -> elem(x, 1) end)
+  end
+
+  def sort_clockwise(coordinates, center_coordinate) do
+    coordinates
+    |> Enum.sort_by(fn c -> angle_of_coordinate(center_coordinate, c) end)
+  end
+
+  def angle_of_coordinate(from, to) do
+    {to_y, to_x} = make_relative(from, to)
+    raw_angle = :math.atan2(to_y, to_x) * (180 / :math.pi())
+
+    if raw_angle > 0 do
+      180 - raw_angle
+    else
+      180 + abs(raw_angle)
+    end
+  end
+
+  def vaporise_asteroids(_, []) do
+    []
+  end
+
+  def vaporise_asteroids(laser_coordinate, coordinates) do
+    vaporised =
+      calculate_direct_lines_of_sight(laser_coordinate, coordinates)
+      |> sort_clockwise(laser_coordinate)
+
+    remaining_asteroids =
+      MapSet.difference(MapSet.new(coordinates), MapSet.new(vaporised))
+      |> MapSet.to_list()
+
+    vaporised ++ vaporise_asteroids(laser_coordinate, remaining_asteroids)
+  end
+
+  def vaporise_asteroids_from_file(file) do
+    coordinates =
+      file
+      |> read_input_from_file()
+      |> coordinates_of_asteroids()
+
+    laser_coordinate =
+      calculate_direct_line_of_sights(coordinates)
+      |> Enum.max_by(fn x -> elem(x, 1) end)
+      |> elem(0)
+
+    vaporise_asteroids(laser_coordinate, List.delete(coordinates, laser_coordinate))
   end
 
   def run(_) do
-    IO.inspect(coordinates_with_most_detections("./lib/mix/tasks/day10/example1.txt"))
-    IO.inspect(coordinates_with_most_detections("./lib/mix/tasks/day10/example2.txt"))
-    IO.inspect(coordinates_with_most_detections("./lib/mix/tasks/day10/example3.txt"))
-    IO.inspect(coordinates_with_most_detections("./lib/mix/tasks/day10/example4.txt"))
-    IO.inspect(coordinates_with_most_detections("./lib/mix/tasks/day10/example5.txt"))
-    IO.inspect(coordinates_with_most_detections("./lib/mix/tasks/day10/input10.txt"))
+    {x, y} = Enum.at(vaporise_asteroids_from_file("./lib/mix/tasks/day10/input10.txt"), 199)
+    IO.inspect(x * 100 + y)
+
   end
 end

@@ -31,13 +31,14 @@ defmodule Mix.Tasks.AOC.Day9 do
   def execute_jump_operation(6, 0, parameter_2, _), do: parameter_2
   def execute_jump_operation(6, _, _, index), do: index + 3
 
-
   def parameter_index_for_mode(instructions, mode, parameter, relative_base_offset) do
     case mode do
       0 ->
         parameter
+
       1 ->
         parameter
+
       2 ->
         relative_base_offset + parameter
     end
@@ -47,8 +48,10 @@ defmodule Mix.Tasks.AOC.Day9 do
     case mode do
       0 ->
         Enum.at(instructions, parameter) || 0
+
       1 ->
         parameter
+
       2 ->
         Enum.at(instructions, relative_base_offset + parameter) || 0
     end
@@ -58,7 +61,7 @@ defmodule Mix.Tasks.AOC.Day9 do
     if index < length(instructions) do
       List.replace_at(instructions, index, value)
     else
-      memory_to_add = (index - length(instructions))
+      memory_to_add = index - length(instructions)
       instructions ++ Enum.map(0..memory_to_add, fn x -> if x == memory_to_add, do: value, else: 0 end)
     end
   end
@@ -75,14 +78,18 @@ defmodule Mix.Tasks.AOC.Day9 do
     {:halted, 0, instructions, output, inputIndex, relative_base_offset}
   end
 
-  def runInstruction({operation, mode_1, mode_2, mode_3}, index, instructions, _, output, inputIndex, relative_base_offset) when operation in [5, 6] do
+  def runInstruction({operation, mode_1, mode_2, mode_3}, index, instructions, _, output, inputIndex, relative_base_offset)
+      when operation in [5, 6] do
     {parameter_1_value, parameter_2_value, _} = parameters_for_modes(instructions, index, mode_1, mode_2, mode_3, relative_base_offset)
     new_index = execute_jump_operation(operation, parameter_1_value, parameter_2_value, index)
     {:running, new_index, instructions, output, inputIndex, relative_base_offset}
   end
 
-  def runInstruction({operation, mode_1, mode_2, mode_3}, index, instructions, _, output, inputIndex, relative_base_offset) when operation in [1, 2, 7, 8] do
-    {parameter_1_value, parameter_2_value, parameter_3_value} = parameters_for_modes(instructions, index, mode_1, mode_2, mode_3, relative_base_offset)
+  def runInstruction({operation, mode_1, mode_2, mode_3}, index, instructions, _, output, inputIndex, relative_base_offset)
+      when operation in [1, 2, 7, 8] do
+    {parameter_1_value, parameter_2_value, parameter_3_value} =
+      parameters_for_modes(instructions, index, mode_1, mode_2, mode_3, relative_base_offset)
+
     {skip_forward, result} = execute_operation(operation, parameter_1_value, parameter_2_value)
     new_instructions = replace_in_memory(instructions, parameter_3_value, result)
     {:running, index + skip_forward, new_instructions, output, inputIndex, relative_base_offset}
@@ -140,9 +147,9 @@ defmodule Mix.Tasks.AOC.Day9 do
   def has_halted(program_state), do: elem(program_state, 0) == :halted
   def get_output(program_state), do: elem(program_state, 3)
 
-
   def execute_program_until_halted(program_state, inputs) do
     state = execute_program(program_state, inputs)
+
     if has_halted(state) do
       state
     else
@@ -183,7 +190,6 @@ defmodule Mix.Tasks.AOC.Day9 do
     # IO.inspect(replace_in_memory([0,1,2,3], 4, 999))
     # IO.inspect(replace_in_memory([0,1,2,3], 5, 999))
     # IO.inspect(replace_in_memory([0,1,2,3], 7, 999))
-
 
     instructions_string =
       "./lib/mix/tasks/day9/input9.txt"

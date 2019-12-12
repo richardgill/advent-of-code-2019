@@ -1,6 +1,6 @@
-defmodule Day11Tests do
+defmodule Day12Tests do
   use ExUnit.Case
-  doctest Mix.Tasks.AOC.Day11
+  doctest Mix.Tasks.AOC.Day12
 
   calculate_direction_cases = [
     {3, 0, 2},

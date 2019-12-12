@@ -178,7 +178,7 @@ defmodule Mix.Tasks.AOC.Day11Part2 do
   end
 
   def calculate_direction(direction, raw_turn) do
-    turn  = if raw_turn == 0, do: -1, else: raw_turn
+    turn = if raw_turn == 0, do: -1, else: raw_turn
     new_direction = direction + turn
 
     case new_direction do
@@ -213,7 +213,6 @@ defmodule Mix.Tasks.AOC.Day11Part2 do
     matching_coordinate = find_last_coordinate(coordinates, coordinate)
 
     if matching_coordinate, do: elem(matching_coordinate, 1), else: 0
-
   end
 
   def paint_hull_helper(inputs, {coordinates, robot_direction, robot_coordinate}, program_state) do
@@ -225,19 +224,23 @@ defmodule Mix.Tasks.AOC.Day11Part2 do
     else
       color = get_output(new_state_1)
       turn = get_output(new_state_2)
-      {new_coordinates, new_robot_direction, new_robot_coordinate} = calculate_hull_state(color, turn, {coordinates, robot_direction, robot_coordinate})
+
+      {new_coordinates, new_robot_direction, new_robot_coordinate} =
+        calculate_hull_state(color, turn, {coordinates, robot_direction, robot_coordinate})
+
       next_color = find_color(new_coordinates, new_robot_coordinate)
       paint_hull_helper(inputs ++ [next_color], {new_coordinates, new_robot_direction, new_robot_coordinate}, new_state_2)
     end
   end
 
   def print_hull(coordinates_with_colors) do
-
     coordinates = Enum.map(coordinates_with_colors, fn c -> elem(c, 0) end)
-    final_coordinates = coordinates
-    |> MapSet.new()
-    |> MapSet.to_list()
-    |> Enum.map(fn c -> find_last_coordinate(coordinates_with_colors, c) end)
+
+    final_coordinates =
+      coordinates
+      |> MapSet.new()
+      |> MapSet.to_list()
+      |> Enum.map(fn c -> find_last_coordinate(coordinates_with_colors, c) end)
 
     x_coordinates = Enum.map(coordinates, fn {x, _} -> x end)
     y_coordinates = Enum.map(coordinates, fn {_, y} -> y end)
@@ -248,11 +251,11 @@ defmodule Mix.Tasks.AOC.Day11Part2 do
 
     for y <- max_y..min_y do
       for x <- min_x..max_x do
-        {_, color} = find_last_coordinate(coordinates_with_colors, {x,y}) || {{}, 0}
+        {_, color} = find_last_coordinate(coordinates_with_colors, {x, y}) || {{}, 0}
         char = if color == 1, do: 'x', else: ' '
         IO.write(char)
-
       end
+
       IO.write("\n")
     end
   end

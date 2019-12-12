@@ -178,7 +178,7 @@ defmodule Mix.Tasks.AOC.Day11 do
   end
 
   def calculate_direction(direction, raw_turn) do
-    turn  = if raw_turn == 0, do: -1, else: raw_turn
+    turn = if raw_turn == 0, do: -1, else: raw_turn
     new_direction = direction + turn
 
     case new_direction do
@@ -204,13 +204,12 @@ defmodule Mix.Tasks.AOC.Day11 do
   end
 
   def find_color(coordinates, coordinate) do
-    matching_coordinate = coordinates
-    |> Enum.reverse()
-    |> Enum.find(fn c -> elem(c, 0) == coordinate end)
-
+    matching_coordinate =
+      coordinates
+      |> Enum.reverse()
+      |> Enum.find(fn c -> elem(c, 0) == coordinate end)
 
     if matching_coordinate, do: elem(matching_coordinate, 1), else: 0
-
   end
 
   def paint_hull_helper(inputs, {coordinates, robot_direction, robot_coordinate}, program_state) do
@@ -222,7 +221,10 @@ defmodule Mix.Tasks.AOC.Day11 do
     else
       color = get_output(new_state_1)
       turn = get_output(new_state_2)
-      {new_coordinates, new_robot_direction, new_robot_coordinate} = calculate_hull_state(color, turn, {coordinates, robot_direction, robot_coordinate})
+
+      {new_coordinates, new_robot_direction, new_robot_coordinate} =
+        calculate_hull_state(color, turn, {coordinates, robot_direction, robot_coordinate})
+
       next_color = find_color(new_coordinates, new_robot_coordinate)
       paint_hull_helper(inputs ++ [next_color], {new_coordinates, new_robot_direction, new_robot_coordinate}, new_state_2)
     end

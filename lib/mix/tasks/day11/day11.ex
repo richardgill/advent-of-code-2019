@@ -214,13 +214,6 @@ defmodule Mix.Tasks.AOC.Day11 do
   end
 
   def paint_hull_helper(inputs, {coordinates, robot_direction, robot_coordinate}, program_state) do
-    # :timer.sleep(2000)
-
-    # IO.inspect(inputs)
-    IO.inspect(coordinates)
-    IO.puts("\n")
-    # IO.inspect(robot_direction)
-    # IO.inspect(robot_coordinate)
     new_state_1 = execute_program(program_state, inputs)
     new_state_2 = execute_program(new_state_1, inputs)
 

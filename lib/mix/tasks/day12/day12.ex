@@ -1,5 +1,6 @@
 defmodule Mix.Tasks.AOC.Day12 do
   use Mix.Task
+
   def permutations([]), do: [[]]
   def permutations(list), do: for(elem <- list, rest <- permutations(list -- [elem]), do: [elem | rest])
 

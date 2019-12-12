@@ -1,7 +1,5 @@
 defmodule Mix.Tasks.AOC.Day12Part2 do
   use Mix.Task
-  def permutations([]), do: [[]]
-  def permutations(list), do: for(elem <- list, rest <- permutations(list -- [elem]), do: [elem | rest])
 
   def tuple_add(tuple_1, tuple_2) do
     tuple_1_list = Tuple.to_list(tuple_1)
@@ -80,23 +78,36 @@ defmodule Mix.Tasks.AOC.Day12Part2 do
 
     run_simulation_helper(moons_with_velocities, steps)
     |> Enum.map(fn moon -> calculate_energy(moon) end)
-    # |> IO.inspect()
     |> Enum.map(fn {_, _, total_energy} -> total_energy end)
     |> Enum.sum()
   end
 
-  def find_old_state_helper(moons, previous_states) do
-    if rem(length(previous_states), 10000) == 0 do
-      IO.puts(length(previous_states))
-    end
-    # IO.inspect(moons)
-    # IO.inspect(previous_states)
-    if Enum.any?(previous_states, fn previous_state -> previous_state == moons end) do
-      length(previous_states)
+  def get_axis(ms, axis) do
+    ms
+    |> Enum.map(fn {p, v} -> {elem(p, axis), elem(v, axis)} end)
+  end
+
+  def get_axises(moons, axis) do
+    Enum.map(moons, fn ms ->get_axis(ms, axis) end)
+  end
+
+  def axix_repeats_after(moons, axis) do
+    axises = get_axises(moons, axis)
+    y = List.first(axises)
+    axises2 = axises |> Enum.drop(1)
+
+    index = Enum.find_index(axises2, fn a-> a == y end)
+    if index != nil, do: index + 1, else: nil
+  end
+
+  def find_old_state_helper(moons, first_state, count, axis) do
+
+    is_repeating = get_axis(moons, axis) == get_axis(first_state, axis) && count != 0
+    if is_repeating do
+      count
     else
       new_moons = run_simulation_helper(moons, 1)
-      new_states = previous_states ++ [moons]
-      find_old_state_helper(new_moons, new_states)
+      find_old_state_helper(new_moons, first_state, count + 1, axis)
     end
   end
 
@@ -104,7 +115,10 @@ defmodule Mix.Tasks.AOC.Day12Part2 do
     moons_with_velocities =
       moons
       |> Enum.map(fn moon -> {moon, {0, 0, 0}} end)
-    find_old_state_helper(moons_with_velocities, [])
+    x_repeats = find_old_state_helper(moons_with_velocities, moons_with_velocities, 0, 0)
+    y_repeats = find_old_state_helper(moons_with_velocities, moons_with_velocities, 0, 1)
+    z_repeats = find_old_state_helper(moons_with_velocities, moons_with_velocities, 0, 2)
+    Math.lcm(Math.lcm(x_repeats, y_repeats), z_repeats)
   end
 
   def run(_) do
@@ -114,7 +128,6 @@ defmodule Mix.Tasks.AOC.Day12Part2 do
 
     IO.inspect(find_old_state(example_1))
     IO.inspect(find_old_state(example_2))
-    # IO.inspect(run_simulation(example_2, 100))
-    # IO.inspect(run_simulation(input, 1000))
+    IO.inspect(find_old_state(input))
   end
 end

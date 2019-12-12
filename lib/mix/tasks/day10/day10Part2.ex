@@ -143,6 +143,5 @@ defmodule Mix.Tasks.AOC.Day10Part2 do
   def run(_) do
     {x, y} = Enum.at(vaporise_asteroids_from_file("./lib/mix/tasks/day10/input10.txt"), 199)
     IO.inspect(x * 100 + y)
-
   end
 end

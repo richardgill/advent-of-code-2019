@@ -129,7 +129,7 @@ defmodule Mix.Tasks.AOC.Day13 do
     execute_program({:running, index, instructions, output, inputIndex, relative_base_offset}, inputs)
   end
 
-  def execute_program({:inputting, index, instructions, output, inputIndex, relative_base_offset}, inputs) do
+  def execute_program({:inputting, index, instructions, output, inputIndex, relative_base_offset}, _) do
     {:inputting, index, instructions, output, inputIndex, relative_base_offset}
   end
 
@@ -161,7 +161,7 @@ defmodule Mix.Tasks.AOC.Day13 do
         {state, outputs}
       {:outputting, index, instructions, output, inputIndex, relative_base_offset} ->
         execute_program_until_halted({:running, index, instructions, output, inputIndex, relative_base_offset}, inputs, outputs ++ [output])
-      {:inputting, _, _, output, _, _} ->
+      {:inputting, _, _, _, _, _} ->
         {state, outputs}
     end
   end
@@ -189,8 +189,7 @@ defmodule Mix.Tasks.AOC.Day13 do
     max_x = xs |> Enum.max()
     min_y = ys |> Enum.min()
     max_y = ys |> Enum.max()
-
-    IO.puts("Score: #{get_score(tiles)}")
+    IO.puts("\n\nScore: #{get_score(tiles)}")
 
     for y <- min_y..max_y do
       for x <- min_x..max_x do
@@ -219,96 +218,187 @@ defmodule Mix.Tasks.AOC.Day13 do
   def update_tiles(old_tiles, new_tiles) do
     old_tiles
     |> Enum.map(fn [x, y, tile_type] ->
-      tile = Enum.find(new_tiles, fn [new_tile_x, new_tile_y, new_tile_type] -> new_tile_x == x && new_tile_y == y  end)
+      tile = new_tiles |> Enum.reverse() |> Enum.find(fn [new_tile_x, new_tile_y, _] -> new_tile_x == x && new_tile_y == y  end)
       tile || [x, y, tile_type]
     end)
   end
-  def find_type_of_type(tiles, type) do
-    tiles |> Enum.find(fn [_, _, tile_type] -> tile_type === type end)
+
+  def is_type_of_type?([_, _, tile_type], type) do
+    tile_type === type
   end
 
-  def calculate_next_ball_position(old_tiles, new_tiles) do
-    [paddle_x, paddle_y, _] = find_type_of_type(new_tiles, 3)
-    [old_paddle_x, old_paddle_y, _] = find_type_of_type(old_tiles, 3)
-    [ball_x, ball_y, _] = find_type_of_type(new_tiles, 4) || [old_paddle_x, old_paddle_y, 4]
-    [previous_ball_x, previous_ball_y, _] = find_type_of_type(old_tiles, 4) || [paddle_x, paddle_y, 4]
-
-    going_right = ball_x > previous_ball_x
-    going_left = !going_right
-    going_up = ball_y < previous_ball_y
-    going_down = !going_up
-
-    next_x = if going_right, do: ball_x + 1, else: ball_x - 1
-    next_y = if going_up, do: ball_y + 1, else: ball_y - 1
-
-    [next_x, next_y]
+  def find_tile_of_type(tiles, type) do
+    tiles |> Enum.find(fn t -> is_type_of_type?(t, type) end)
   end
-  def calculate_joystick_move([],_, _), do: 1
-  # def calculate_joystick_move(x, _), do: 0
 
-  def calculate_joystick_move(old_tiles, tiles, last_input) do
-    [paddle_x, paddle_y, _] = find_type_of_type(tiles, 3)
-    [old_paddle_x, old_paddle_y, _] = find_type_of_type(old_tiles, 3)
-    [ball_x, ball_y, _] = find_type_of_type(tiles, 4) || [old_paddle_x, old_paddle_y, 4]
-    [previous_ball_x, previous_ball_y, _] = find_type_of_type(old_tiles, 4) || [paddle_x, paddle_y, 4]
-    IO.inspect(calculate_next_ball_position(old_tiles, tiles))
-    [next_ball_x, next_ball_y] = calculate_next_ball_position(old_tiles, tiles)
-    direction = if next_ball_x > ball_x, do: 1, else: -1
-    # direction = if previous_ball_y < ball_y, do: -1 * direction, else: direction
-    steps_until_cross_paddle = paddle_y - ball_y
-    target_paddle_x =  ball_x + (steps_until_cross_paddle * direction)
-    paddle_moving_left = last_input == -1
-    paddle_moving_right = last_input == 1
-    IO.puts("paddle_x #{paddle_x}")
-    IO.puts("#{ball_x}, #{ball_y}")
-    IO.puts("paddle_moving_right #{paddle_moving_right}")
-    IO.puts("paddle_moving_left #{paddle_moving_left}")
-    IO.puts("direction #{direction}")
-    IO.puts("steps_until_cross_paddle #{steps_until_cross_paddle}")
-    IO.puts("target_paddle_x #{target_paddle_x}")
-    # cond do
-    #   next_ball_x == target_paddle_x -> 0
-    #   next_ball_x < target_paddle_x -> 1
-    #   next_ball_x > target_paddle_x -> -1
-    # end
-    # cond do
-    #   next_ball_x == target_paddle_x -> 0
-    #   next_ball_x < target_paddle_x -> 1
-    #   next_ball_x > target_paddle_x -> -1
-    # end
-    cond do
-      target_paddle_x - paddle_x === 1 -> if paddle_moving_right, do: 0, else: 1
-      target_paddle_x - paddle_x === -1 -> if paddle_moving_left, do: 0, else: -1
-      paddle_x + 1 < target_paddle_x -> 1
-      paddle_x - 1 > target_paddle_x -> -1
-      paddle_x == target_paddle_x && !paddle_moving_left && !paddle_moving_right -> 0
-      paddle_x == target_paddle_x && paddle_moving_left -> 1
-      paddle_x == target_paddle_x && paddle_moving_right -> -1
-    end
-  end
+  def drop_last(xs), do: xs |> Enum.reverse() |> Enum.drop(1) |> Enum.reverse()
+
+  # def calculate_next_ball_position(old_tiles, new_tiles) do
+  #   [paddle_x, paddle_y, _] = find_type_of_type(new_tiles, 3)
+  #   [old_paddle_x, old_paddle_y, _] = find_type_of_type(old_tiles, 3)
+  #   [ball_x, ball_y, _] = find_type_of_type(new_tiles, 4) || [old_paddle_x, old_paddle_y, 4]
+  #   [previous_ball_x, previous_ball_y, _] = find_type_of_type(old_tiles, 4) || [paddle_x, paddle_y, 4]
+
+  #   going_right = ball_x > previous_ball_x
+  #   going_left = !going_right
+  #   going_up = ball_y < previous_ball_y
+  #   going_down = !going_up
+
+  #   next_x = if going_right, do: ball_x + 1, else: ball_x - 1
+  #   next_y = if going_up, do: ball_y + 1, else: ball_y - 1
+
+  #   [next_x, next_y]
+  # end
+  # def calculate_joystick_move([],_, _), do: 1
+  # # def calculate_joystick_move(x, _), do: 0
+
+  # def calculate_joystick_move(old_tiles, tiles, last_input) do
+  #   [paddle_x, paddle_y, _] = find_type_of_type(tiles, 3)
+  #   [old_paddle_x, old_paddle_y, _] = find_type_of_type(old_tiles, 3)
+  #   [ball_x, ball_y, _] = find_type_of_type(tiles, 4) || [old_paddle_x, old_paddle_y, 4]
+  #   [previous_ball_x, previous_ball_y, _] = find_type_of_type(old_tiles, 4) || [paddle_x, paddle_y, 4]
+  #   IO.inspect(calculate_next_ball_position(old_tiles, tiles))
+  #   [next_ball_x, next_ball_y] = calculate_next_ball_position(old_tiles, tiles)
+  #   direction = if next_ball_x > ball_x, do: 1, else: -1
+  #   # direction = if previous_ball_y < ball_y, do: -1 * direction, else: direction
+  #   steps_until_cross_paddle = paddle_y - ball_y
+  #   target_paddle_x =  ball_x + (steps_until_cross_paddle * direction)
+  #   paddle_moving_left = last_input == -1
+  #   paddle_moving_right = last_input == 1
+  #   IO.puts("paddle_x #{paddle_x}")
+  #   IO.puts("#{ball_x}, #{ball_y}")
+  #   IO.puts("paddle_moving_right #{paddle_moving_right}")
+  #   IO.puts("paddle_moving_left #{paddle_moving_left}")
+  #   IO.puts("direction #{direction}")
+  #   IO.puts("steps_until_cross_paddle #{steps_until_cross_paddle}")
+  #   IO.puts("target_paddle_x #{target_paddle_x}")
+  #   # cond do
+  #   #   next_ball_x == target_paddle_x -> 0
+  #   #   next_ball_x < target_paddle_x -> 1
+  #   #   next_ball_x > target_paddle_x -> -1
+  #   # end
+  #   cond do
+  #     paddle_x == target_paddle_x -> 0
+  #     paddle_x < target_paddle_x -> 1
+  #     paddle_x > target_paddle_x -> -1
+  #   end
+  #   # cond do
+  #   #   target_paddle_x - paddle_x === 1 -> if paddle_moving_right, do: 0, else: 1
+  #   #   target_paddle_x - paddle_x === -1 -> if paddle_moving_left, do: 0, else: -1
+  #   #   paddle_x + 1 < target_paddle_x -> 1
+  #   #   paddle_x - 1 > target_paddle_x -> -1
+  #   #   paddle_x == target_paddle_x && !paddle_moving_left && !paddle_moving_right -> 0
+  #   #   paddle_x == target_paddle_x && paddle_moving_left -> 1
+  #   #   paddle_x == target_paddle_x && paddle_moving_right -> -1
+  #   # end
+  # end
 
   # Ball bounces when ball_y 20, 21, 20
   # ball_y below 20 is fail
 
-  def play_game_helper(program_state, inputs, old_tiles) do
-    {{_, index, instructions, output, inputIndex, relative_base_offset}, outputs} = execute_program_until_halted(program_state, inputs, [])
+  def step_through_game(program_state, input, old_tiles) do
+    {{_, index, instructions, output, _, relative_base_offset}, outputs} = execute_program_until_halted(program_state, [input], [])
     new_tiles = outputs |> Enum.chunk_every(3)
     tiles = update_tiles(old_tiles, new_tiles)
-    # IO.inspect(tiles)
+
     print_game(tiles)
-    move = calculate_joystick_move(old_tiles, tiles, List.first(inputs))
-    IO.puts(move)
-    IO.puts("\n")
-    :timer.sleep(2000)
-    # input = IO.read(:stdio, :line) |> String.trim() |> Integer.parse()
-    # IO.puts(input)
-    # IO.inspect(program_state)
-    play_game_helper({:running, index, instructions, output, 1, relative_base_offset}, [List.last(inputs), move], tiles)
+    :timer.sleep(100)
+
+    {{:running, index, instructions, output, 0, relative_base_offset}, tiles}
   end
 
-  def play_game(instructions_string) do
+  def has_missed_ball([]), do: false
+
+  def has_missed_ball(tile_states) do
+    [_, ball_y, _] = tile_states
+    |> List.last()
+    |> find_tile_of_type(4)
+
+    # IO.puts("has missed ball result #{ball_y}")
+    ball_y > 21
+  end
+
+  def has_hit_ball(tile_states) do
+    if length(tile_states) >= 3 do
+      [_, ball_y_1, _] = find_tile_of_type(tile_states |> Enum.reverse() |> Enum.drop(2) |> List.first(), 4)
+      [_, ball_y_2, _] = find_tile_of_type(tile_states |> Enum.reverse() |> Enum.drop(1) |> List.first(), 4)
+      [_, ball_y_3, _] = find_tile_of_type(tile_states |> Enum.reverse() |> List.first(), 4)
+      ball_y_1 == 20 && ball_y_2 == 21 && ball_y_3 == 20
+    else
+      false
+    end
+  end
+
+
+
+  def inputs_to_hit_ball(program_states, tile_states, move, inputs \\ []) do
+    if move != 0 do
+      # IO.inspect binding()
+      # :timer.sleep(2000)
+    end
+    cond do
+      has_hit_ball(tile_states)
+        ->
+          # IO.puts("has hit ball")
+          {program_states |> drop_last() |> List.last(), drop_last(inputs), tile_states |> drop_last() |> List.last()}
+        # -> inputs |> Enum.reverse() |> Enum.drop(1) |> Enum.reverse()
+      has_missed_ball(tile_states)
+        ->
+          # IO.puts("has missed ball")
+          nil
+      true ->
+        input = cond do
+          move > 0 -> 1
+          move < 0 -> -1
+          true -> 0
+        end
+
+        {new_program_state, tiles} = step_through_game(List.last(program_states), input, List.last(tile_states) || [])
+        remaining_to_move = if move == 0, do: 0, else: if move > 0, do: move - 1, else: move + 1
+        if move != 0 do
+          # IO.inspect binding()
+          # :timer.sleep(2000)
+        end
+
+        inputs_to_hit_ball(program_states ++ [new_program_state], tile_states ++ [tiles], remaining_to_move, inputs ++ [input])
+    end
+  end
+
+
+  def find_inputs_to_hit_ball(program_state, tile_states, move \\ 0) do
+    program_states = [program_state]
+    inputs_to_hit_ball(program_states, tile_states, move) || inputs_to_hit_ball(program_states, tile_states, move * -1) || find_inputs_to_hit_ball(program_state, tile_states, move + 1)
+  end
+
+  def find_winning_inputs_helper(program_state, inputs, tile_states) do
+    IO.inspect(Enum.join(inputs, ","))
+    IO.inspect(!Enum.empty?(tile_states) && (tile_states |> List.last() |> Enum.filter(fn t -> is_type_of_type?(t, 2) end) |> length()))
+    if !Enum.empty?(tile_states) && (tile_states |> List.last() |> find_tile_of_type(2)) == nil do
+      inputs
+    else
+      {new_program_state, new_inputs, new_tiles} = find_inputs_to_hit_ball(program_state, tile_states)
+      find_winning_inputs_helper(new_program_state, inputs ++ new_inputs, [new_tiles])
+    end
+
+  end
+
+  def find_winning_inputs(instructions_string) do
     instructions = parse_instructions(instructions_string)
-    play_game_helper({:running, 0, instructions, nil, 0, 0}, [1], [])
+    find_winning_inputs_helper({:running, 0, instructions, nil, 0, 0}, [], [])
+  end
+
+  def play_game_helper(_, []) do
+    nil
+  end
+
+  def play_game_helper(program_state, inputs, old_tiles) do
+    {new_program_state, tiles} = step_through_game(program_state, List.first(inputs), old_tiles)
+    play_game_helper(new_program_state, Enum.drop(inputs, 1), tiles)
+  end
+
+  def play_game(instructions_string, inputs) do
+    instructions = parse_instructions(instructions_string)
+    play_game_helper({:running, 0, instructions, nil, 0, 0}, inputs, [])
   end
 
 
@@ -340,14 +430,17 @@ defmodule Mix.Tasks.AOC.Day13 do
     # IO.inspect(replace_in_memory([0,1,2,3], 4, 999))
     # IO.inspect(replace_in_memory([0,1,2,3], 5, 999))
     # IO.inspect(replace_in_memory([0,1,2,3], 7, 999))
-
+    # IO.inspect(update_tiles([[1, 1, 1], [0, 0, 4]], [[1,1,4]]))
     instructions_string =
       "./lib/mix/tasks/day13/input13.txt"
       |> File.read!()
       |> String.trim()
 
-    # IO.inspect(construct_board_game(instructions_string))
-    play_game(instructions_string)
+    winning_inputs = find_winning_inputs(instructions_string)
+    IO.puts("winning_inputs: ")
+    IO.inspect(winning_inputs)
+    play_game(instructions_string, winning_inputs)
+    # good_input = [0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     # |> Enum.filter(fn [x, y, tile] -> tile == 2 end)
     # |> length()
     # |> IO.inspect()

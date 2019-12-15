@@ -331,7 +331,7 @@ defmodule Mix.Tasks.AOC.Day13 do
 
 
 
-  def inputs_to_hit_ball(program_states, tile_states, move, inputs \\ []) do
+  def inputs_to_hit_ball(program_states, tile_states, move, inputs, random?) do
     if move != 0 do
       # IO.inspect binding()
       # :timer.sleep(2000)
@@ -348,6 +348,8 @@ defmodule Mix.Tasks.AOC.Day13 do
           nil
       true ->
         input = cond do
+          random? && move == 1 -> -1
+          random? && move == 0 -> 1
           move > 0 -> 1
           move < 0 -> -1
           true -> 0
@@ -360,14 +362,41 @@ defmodule Mix.Tasks.AOC.Day13 do
           # :timer.sleep(2000)
         end
 
-        inputs_to_hit_ball(program_states ++ [new_program_state], tile_states ++ [tiles], remaining_to_move, inputs ++ [input])
+        inputs_to_hit_ball(program_states ++ [new_program_state], tile_states ++ [tiles], remaining_to_move, inputs ++ [input], random?)
     end
   end
 
+  def find_where_ball_hits(program_states, tile_states) do
+    cond do
+      has_hit_ball(tile_states)
+        ->
+          # IO.puts("has hit ball")
+          [x_where_ball_hits, _, _] = find_tile_of_type(tile_states |> List.last(), 3)
+          # IO.puts(x_where_ball_hits)
+          {x_where_ball_hits, program_states |> drop_last() |> length(), program_states |> drop_last() |> List.last(), tile_states |> drop_last() |> List.last()}
+        # -> inputs |> Enum.reverse() |> Enum.drop(1) |> Enum.reverse()
+      has_missed_ball(tile_states)
+        ->
+          # IO.puts("has missed ball")
+          [x_where_ball_hits, _, _] = find_tile_of_type(List.last(tile_states), 4)
+          # IO.puts(x_where_ball_hits)
+          {x_where_ball_hits, program_states |> drop_last() |> length(), program_states |> drop_last() |> List.last(), tile_states |> drop_last() |> List.last()}
+      true ->
 
-  def find_inputs_to_hit_ball(program_state, tile_states, move \\ 0) do
+        {new_program_state, tiles} = step_through_game(List.last(program_states), 0, List.last(tile_states) || [])
+
+        find_where_ball_hits(program_states ++ [new_program_state], tile_states ++ [tiles])
+    end
+  end
+
+  def find_inputs_to_hit_ball(program_state, tile_states) do
     program_states = [program_state]
-    inputs_to_hit_ball(program_states, tile_states, move) || inputs_to_hit_ball(program_states, tile_states, move * -1) || find_inputs_to_hit_ball(program_state, tile_states, move + 1)
+    {x_where_ball_hits, steps, new_program_state, new_tiles} = find_where_ball_hits(program_states, tile_states)
+    [current_paddle_x, _, _] = find_tile_of_type(new_tiles, 3)
+
+    move = x_where_ball_hits - current_paddle_x
+    has_repeated = length(tile_states) >= 2 && Enum.at(tile_states, length(tile_states) - 1 ) == Enum.at(tile_states, length(tile_states) - 2)
+    inputs_to_hit_ball(program_states, tile_states, move, [], has_repeated)
   end
 
   def find_winning_inputs_helper(program_state, inputs, tile_states) do

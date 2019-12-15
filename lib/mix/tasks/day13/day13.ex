@@ -198,6 +198,8 @@ defmodule Mix.Tasks.AOC.Day13 do
       end
       IO.write("\n")
     end
+    :timer.sleep(100)
+
   end
 
   def is_score([-1,0, _]), do: true
@@ -302,7 +304,6 @@ defmodule Mix.Tasks.AOC.Day13 do
     tiles = update_tiles(old_tiles, new_tiles)
 
     print_game(tiles)
-    :timer.sleep(100)
 
     {{:running, index, instructions, output, 0, relative_base_offset}, tiles}
   end
@@ -331,39 +332,13 @@ defmodule Mix.Tasks.AOC.Day13 do
 
 
 
-  def inputs_to_hit_ball(program_states, tile_states, move, inputs, random?) do
-    if move != 0 do
-      # IO.inspect binding()
-      # :timer.sleep(2000)
-    end
-    cond do
-      has_hit_ball(tile_states)
-        ->
-          # IO.puts("has hit ball")
-          {program_states |> drop_last() |> List.last(), drop_last(inputs), tile_states |> drop_last() |> List.last()}
-        # -> inputs |> Enum.reverse() |> Enum.drop(1) |> Enum.reverse()
-      has_missed_ball(tile_states)
-        ->
-          # IO.puts("has missed ball")
-          nil
-      true ->
-        input = cond do
-          random? && move == 1 -> -1
-          random? && move == 0 -> 1
-          move > 0 -> 1
-          move < 0 -> -1
-          true -> 0
-        end
+  def run_inputs(program_states, tile_states, []) do
+    {List.last(program_states), List.last(tile_states)}
+  end
 
-        {new_program_state, tiles} = step_through_game(List.last(program_states), input, List.last(tile_states) || [])
-        remaining_to_move = if move == 0, do: 0, else: if move > 0, do: move - 1, else: move + 1
-        if move != 0 do
-          # IO.inspect binding()
-          # :timer.sleep(2000)
-        end
-
-        inputs_to_hit_ball(program_states ++ [new_program_state], tile_states ++ [tiles], remaining_to_move, inputs ++ [input], random?)
-    end
+  def run_inputs(program_states, tile_states, [input | rest_of_inputs]) do
+    {new_program_state, tiles} = step_through_game(List.last(program_states), input, List.last(tile_states) || [])
+    run_inputs(program_states ++ [new_program_state], tile_states ++ [tiles], rest_of_inputs)
   end
 
   def find_where_ball_hits(program_states, tile_states) do
@@ -389,19 +364,66 @@ defmodule Mix.Tasks.AOC.Day13 do
     end
   end
 
+  def randomise_0_moves(moves) do
+    zero_move_count = moves
+    |> Enum.count(fn move -> move == 0 end)
+    random_moves = if zero_move_count > 1 do
+      1..Integer.floor_div(zero_move_count, 2)
+      |> Enum.flat_map(fn _ -> [-1,1] end)
+    else
+      []
+    end
+    zeros = if rem(zero_move_count, 2) == 0, do: [], else: [0]
+    non_zero_moves = moves |> Enum.filter(fn move -> move != 0 end)
+    # IO.inspect(moves)
+    # IO.inspect(zero_move_count)
+    # IO.inspect(Integer.floor_div(zero_move_count, 2))
+    # IO.inspect(random_moves)
+    # IO.inspect(zeros)
+    # IO.inspect(non_zero_moves)
+    # IO.inspect(non_zero_moves ++ random_moves ++ zeros)
+    result = Enum.shuffle(non_zero_moves ++ random_moves ++ zeros)
+    # IO.inspect(result)
+    # :timer.sleep(5000)
+
+    result
+  end
+
   def find_inputs_to_hit_ball(program_state, tile_states) do
     program_states = [program_state]
-    {x_where_ball_hits, steps, new_program_state, new_tiles} = find_where_ball_hits(program_states, tile_states)
+    {x_where_ball_hits, steps, _, new_tiles} = find_where_ball_hits(program_states, tile_states)
     [current_paddle_x, _, _] = find_tile_of_type(new_tiles, 3)
 
-    move = x_where_ball_hits - current_paddle_x
     has_repeated = length(tile_states) >= 2 && Enum.at(tile_states, length(tile_states) - 1 ) == Enum.at(tile_states, length(tile_states) - 2)
-    inputs_to_hit_ball(program_states, tile_states, move, [], has_repeated)
+
+    move = x_where_ball_hits - current_paddle_x
+    remaining_steps = steps - abs(move)
+    input_moves = if move == 0, do: [], else: 1..abs(move) |> Enum.map(fn _ -> if move > 0, do: 1, else: -1 end)
+    step_moves = if remaining_steps == 0, do: [], else: 1..remaining_steps |> Enum.map(fn _ -> 0 end)
+    raw_inputs = drop_last(input_moves ++ step_moves)
+    # IO.puts("Move is: #{move}")
+    randomised_inputs = randomise_0_moves(raw_inputs)
+
+    inputs = if blocks_remaining(tile_states) == 172, do: randomised_inputs, else: raw_inputs
+    IO.inspect(raw_inputs)
+    IO.inspect(randomised_inputs)
+    IO.inspect(inputs)
+    {new_program_state, after_input_tiles} = run_inputs(program_states, tile_states, inputs)
+
+    {new_program_state, inputs, after_input_tiles}
+  end
+
+  def blocks_remaining(tile_states) do
+    if Enum.empty?(tile_states) do
+      nil
+    else
+      (tile_states |> List.last() |> Enum.filter(fn t -> is_type_of_type?(t, 2) end) |> length())
+    end
   end
 
   def find_winning_inputs_helper(program_state, inputs, tile_states) do
     IO.inspect(Enum.join(inputs, ","))
-    IO.inspect(!Enum.empty?(tile_states) && (tile_states |> List.last() |> Enum.filter(fn t -> is_type_of_type?(t, 2) end) |> length()))
+    IO.inspect(blocks_remaining(tile_states))
     if !Enum.empty?(tile_states) && (tile_states |> List.last() |> find_tile_of_type(2)) == nil do
       inputs
     else
@@ -460,6 +482,15 @@ defmodule Mix.Tasks.AOC.Day13 do
     # IO.inspect(replace_in_memory([0,1,2,3], 5, 999))
     # IO.inspect(replace_in_memory([0,1,2,3], 7, 999))
     # IO.inspect(update_tiles([[1, 1, 1], [0, 0, 4]], [[1,1,4]]))
+    IO.inspect(randomise_0_moves([0,0,0]))
+    IO.inspect(randomise_0_moves([0,0,0, 0]))
+    IO.inspect(randomise_0_moves([1,0,0]))
+    IO.inspect(randomise_0_moves([-1,0,0]))
+    IO.inspect(randomise_0_moves([1,-1,0]))
+    IO.inspect(randomise_0_moves([1,1,1]))
+    IO.inspect(randomise_0_moves([1,1,1]))
+    IO.inspect(randomise_0_moves([1,1,1,0,0,0]))
+    IO.inspect(randomise_0_moves([1,1,1,0,0]))
     instructions_string =
       "./lib/mix/tasks/day13/input13.txt"
       |> File.read!()
